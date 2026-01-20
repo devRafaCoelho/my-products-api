@@ -1,0 +1,29 @@
+{
+  "name": "my-products-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+     "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@joi/date": "^2.1.1",
+    "cors": "^2.8.5",
+    "cpf-cnpj-validator": "^1.0.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "handlebars": "^4.7.8",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "libphonenumber": "^0.0.10",
+    "nodemailer": "^7.0.12",
+    "pg": "^8.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
