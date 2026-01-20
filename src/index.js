@@ -12,6 +12,14 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "API is running",
+    timestamp: new Date(),
+    service: "My Products API",
+  });
+});
+
 setUserRoutes(app);
 setProductRoutes(app);
 
