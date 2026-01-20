@@ -2,21 +2,18 @@ const Joi = require("joi");
 const { cpf: cpfValidator } = require("cpf-cnpj-validator");
 const { isValidNumber } = require("libphonenumber-js");
 
-const userSchema = Joi.object({
-  firstName: Joi.string().required().messages({
-    "any.required": "O primeiro nome é obrigatório.",
-    "string.empty": "O primeiro nome é obrigatório.",
+const updateUserSchema = Joi.object({
+  firstName: Joi.string().messages({
+    "string.empty": "O primeiro nome não pode estar vazio.",
     "string.base": "O primeiro nome deve ser um nome válido.",
   }),
-  lastName: Joi.string().required().messages({
-    "any.required": "O sobrenome é obrigatório.",
-    "string.empty": "O sobrenome é obrigatório.",
+  lastName: Joi.string().messages({
+    "string.empty": "O sobrenome não pode estar vazio.",
     "string.base": "O sobrenome deve ser um nome válido.",
   }),
-  email: Joi.string().email().required().messages({
+  email: Joi.string().email().messages({
     "string.email": "O e-mail deve ser válido.",
-    "any.required": "O e-mail é obrigatório.",
-    "string.empty": "O e-mail é obrigatório.",
+    "string.empty": "O e-mail não pode estar vazio.",
   }),
   cpf: Joi.string()
     .custom((value, helpers) => {
@@ -48,11 +45,14 @@ const userSchema = Joi.object({
       "string.pattern.base": "Número de telefone inválido.",
       "string.length": "Número de telefone inválido.",
     }),
-  password: Joi.string().min(5).required().messages({
-    "any.required": "A senha é obrigatória.",
-    "string.empty": "A senha é obrigatória.",
+  password: Joi.string().min(5).messages({
+    "string.empty": "A senha não pode estar vazia.",
     "string.min": "A senha deve conter pelo menos 5 caracteres.",
   }),
-});
+})
+  .min(1)
+  .messages({
+    "object.min": "Pelo menos um campo deve ser fornecido para atualização.",
+  });
 
-module.exports = userSchema;
+module.exports = updateUserSchema;

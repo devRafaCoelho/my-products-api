@@ -61,6 +61,65 @@ class UserController {
       res.status(500).send("Error retrieving user");
     }
   }
+
+  async updateUser(req, res) {
+    try {
+      const { id } = req.user;
+      const data = req.body;
+
+      if (data.password) {
+        data.password = await bcrypt.hash(data.password, 10);
+      }
+
+      const updatedUser = await UserModel.update(id, data);
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password: _, ...userData } = updatedUser;
+
+      return res.status(200).json(userData);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async updateUserPassword(req, res) {
+    try {
+      const { id } = req.user;
+      const { newPassword } = req.body;
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const updatedUser = await UserModel.newPassword(id, hashedPassword);
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      return res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  async deleteUser(req, res) {
+    try {
+      const { id } = req.user;
+      const deletedUser = await UserModel.delete(id);
+
+      if (!deletedUser) {
+        return res.status(404).send("User not found");
+      }
+
+      return res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
 
 module.exports = UserController;
