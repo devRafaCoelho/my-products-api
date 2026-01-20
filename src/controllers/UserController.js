@@ -48,6 +48,19 @@ class UserController {
       return res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  async getUserByLogin(req, res) {
+    try {
+      const user = req.user;
+
+      const { password: _, ...userData } = user;
+
+      res.status(200).json(userData);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error retrieving user");
+    }
+  }
 }
 
 module.exports = UserController;

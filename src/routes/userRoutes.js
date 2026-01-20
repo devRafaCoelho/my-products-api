@@ -2,6 +2,7 @@ const express = require("express");
 const UserController = require("../controllers/UserController");
 const validateSchema = require("../middlewares/validateSchema");
 const validateUserData = require("../middlewares/validateUserData");
+const validateAuthentication = require("../middlewares/validateAuthentication");
 const userSchema = require("../schemas/userSchema");
 const loginSchema = require("../schemas/loginSchema");
 
@@ -23,7 +24,17 @@ const setUserRoutes = (app) => {
     userController.login.bind(userController),
   );
 
+  const protectedRouter = express.Router();
+
+  protectedRouter.use(validateAuthentication);
+
+  protectedRouter.get(
+    "/users",
+    userController.getUserByLogin.bind(userController),
+  );
+
   app.use("/api", router);
+  app.use("/api", protectedRouter);
 };
 
 module.exports = setUserRoutes;
