@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bem-vindo à Nossa Plataforma</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 50px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        text-align: center;
+      }
+      h1 {
+        color: #4caf50;
+      }
+      p {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #777;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Bem-vindo, {{firstName}}!</h1>
+      <p>
+        Estamos animados em tê-lo conosco! Obrigado por se juntar à nossa
+        plataforma. Se você tiver alguma dúvida ou precisar de assistência,
+        sinta-se à vontade para entrar em contato com nossa equipe de suporte.
+      </p>
+      <p>
+        Comece a explorar e aproveite todos os recursos que temos a oferecer.
+        Estamos aqui para ajudá-lo em cada etapa do caminho!
+      </p>
+      <div class="footer">
+        <p>&copy; {{currentYear}} My Products. Todos os direitos reservados.</p>
+      </div>
+    </div>
+  </body>
+</html>
