@@ -14,17 +14,23 @@ class UserController {
       const user = new UserModel(userData);
       const newUser = await user.create();
 
-      const html = await compilerHtml("./src/templates/createUser.html", {
+      // Envia email de forma assíncrona sem bloquear a resposta
+      compilerHtml("./src/templates/createUser.html", {
         firstName: userData.firstName,
-      });
+      })
+        .then((html) => {
+          return transporter.sendMail({
+            from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_EMAIL}>`,
+            to: `${userData.firstName} <${userData.email}>`,
+            subject: "Welcome!!",
+            html,
+          });
+        })
+        .catch((error) => {
+          console.error("Error sending welcome email:", error);
+        });
 
-      await transporter.sendMail({
-        from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_EMAIL}>`,
-        to: `${userData.firstName} <${userData.email}>`,
-        subject: "Welcome!!",
-        html,
-      });
-
+      // Responde imediatamente após criar o usuário
       res.status(201).json(newUser);
     } catch (error) {
       console.error(error);
