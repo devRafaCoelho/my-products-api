@@ -3,7 +3,7 @@ services:
     name: my-products-api
     env: node
     region: oregon
-    buildCommand: npm ci
+    buildCommand: npm install && ls -la && ls -la src/
     startCommand: node src/index.js
     healthCheckPath: /
     envVars:
