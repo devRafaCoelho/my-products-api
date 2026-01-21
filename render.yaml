@@ -2,8 +2,9 @@ services:
   - type: web
     name: my-products-api
     env: node
-    buildCommand: npm install
-    startCommand: npm start
+    region: oregon
+    buildCommand: npm ci
+    startCommand: node src/index.js
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
