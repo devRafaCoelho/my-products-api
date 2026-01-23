@@ -8,15 +8,14 @@ class ProductController {
 
       // Verifica se é um array de produtos
       if (Array.isArray(data)) {
-        const createdProducts = [];
-
-        for (const productData of data) {
+        // Processa todos os produtos em paralelo para melhor performance
+        const productPromises = data.map((productData) => {
           productData.id_user = userId;
           const product = new ProductModel(productData);
-          const newProduct = await product.create();
-          createdProducts.push(newProduct);
-        }
+          return product.create();
+        });
 
+        const createdProducts = await Promise.all(productPromises);
         return res.status(201).json(createdProducts);
       }
 
