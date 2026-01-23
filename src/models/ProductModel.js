@@ -8,6 +8,7 @@ class ProductModel {
     price,
     stock,
     expiration_date,
+    category,
     id_user,
   }) {
     this.id = id;
@@ -16,13 +17,14 @@ class ProductModel {
     this.price = price;
     this.stock = stock;
     this.expiration_date = expiration_date;
+    this.category = category;
     this.id_user = id_user;
   }
 
   async create() {
     const query = `
-      INSERT INTO products (name, description, price, stock, expiration_date, id_user)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO products (name, description, price, stock, expiration_date, category, id_user)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
     `;
     const values = [
@@ -31,6 +33,7 @@ class ProductModel {
       this.price,
       this.stock,
       this.expiration_date,
+      this.category,
       this.id_user,
     ];
     const result = await db.query(query, values);

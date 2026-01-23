@@ -3,10 +3,26 @@ const ProductModel = require("../models/ProductModel");
 class ProductController {
   async createProduct(req, res) {
     try {
-      const productData = req.body;
-      productData.id_user = req.user.id;
+      const data = req.body;
+      const userId = req.user.id;
 
-      const product = new ProductModel(productData);
+      // Verifica se é um array de produtos
+      if (Array.isArray(data)) {
+        const createdProducts = [];
+
+        for (const productData of data) {
+          productData.id_user = userId;
+          const product = new ProductModel(productData);
+          const newProduct = await product.create();
+          createdProducts.push(newProduct);
+        }
+
+        return res.status(201).json(createdProducts);
+      }
+
+      // Caso seja um único produto
+      data.id_user = userId;
+      const product = new ProductModel(data);
       const newProduct = await product.create();
 
       res.status(201).json(newProduct);

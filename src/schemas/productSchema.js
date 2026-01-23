@@ -2,7 +2,7 @@ const Joi = require("joi");
 const JoiDate = require("@joi/date");
 const JoiExtended = Joi.extend(JoiDate);
 
-const productSchema = JoiExtended.object({
+const productObjectSchema = JoiExtended.object({
   name: JoiExtended.string().required().messages({
     "any.required": "O nome do produto é obrigatório.",
     "string.empty": "O nome do produto é obrigatório.",
@@ -29,6 +29,21 @@ const productSchema = JoiExtended.object({
       "date.format": "A data de validade deve estar no formato YYYY-MM-DD.",
       "date.base": "A data de validade deve ser uma data válida.",
     }),
+  category: JoiExtended.string().allow("").messages({
+    "string.base": "A categoria deve ser um texto válido.",
+  }),
 });
+
+const productSchema = JoiExtended.alternatives()
+  .try(
+    productObjectSchema,
+    JoiExtended.array().items(productObjectSchema).min(1).messages({
+      "array.min": "Envie pelo menos um produto.",
+    }),
+  )
+  .messages({
+    "alternatives.match":
+      "O corpo da requisição deve ser um produto ou uma lista de produtos.",
+  });
 
 module.exports = productSchema;
