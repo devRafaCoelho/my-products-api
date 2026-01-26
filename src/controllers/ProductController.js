@@ -34,9 +34,34 @@ class ProductController {
   async getAllProducts(req, res) {
     try {
       const { id } = req.user;
-      const products = await ProductModel.findAll(id);
+      const {
+        page = 1,
+        limit = 10,
+        expiration_date,
+        category,
+        search,
+      } = req.query;
 
-      res.status(200).json(products);
+      // Converte para números
+      const pageNum = parseInt(page, 10);
+      const limitNum = parseInt(limit, 10);
+
+      // Validação básica
+      if (pageNum < 1 || limitNum < 1) {
+        return res.status(400).json({
+          message: "Parâmetros de paginação inválidos",
+        });
+      }
+
+      const filters = {
+        expiration_date,
+        category,
+        search,
+      };
+
+      const result = await ProductModel.findAll(id, pageNum, limitNum, filters);
+
+      res.status(200).json(result);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Erro ao buscar produtos" });

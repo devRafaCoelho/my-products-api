@@ -40,10 +40,64 @@ class ProductModel {
     return result.rows[0];
   }
 
-  static async findAll(id_user) {
-    const query = `SELECT * FROM products WHERE id_user = $1 ORDER BY created_at DESC;`;
-    const result = await db.query(query, [id_user]);
-    return result.rows;
+  static async findAll(id_user, page = 1, limit = 10, filters = {}) {
+    const { expiration_date, category, search } = filters;
+
+    // Construir a query dinamicamente
+    let conditions = ["id_user = $1"];
+    let values = [id_user];
+    let paramCount = 1;
+
+    // Filtro por data de validade
+    if (expiration_date) {
+      paramCount++;
+      conditions.push(`expiration_date = $${paramCount}`);
+      values.push(expiration_date);
+    }
+
+    // Filtro por categoria
+    if (category) {
+      paramCount++;
+      conditions.push(`category ILIKE $${paramCount}`);
+      values.push(category);
+    }
+
+    // Filtro de busca por nome
+    if (search) {
+      paramCount++;
+      conditions.push(`name ILIKE $${paramCount}`);
+      values.push(`%${search}%`);
+    }
+
+    const whereClause = conditions.join(" AND ");
+
+    // Query para contar o total de registros
+    const countQuery = `SELECT COUNT(*) FROM products WHERE ${whereClause};`;
+    const countResult = await db.query(countQuery, values);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    // Calcular offset
+    const offset = (page - 1) * limit;
+
+    // Query para buscar os produtos com paginação
+    const query = `
+      SELECT * FROM products 
+      WHERE ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${paramCount + 1} OFFSET $${paramCount + 2};
+    `;
+
+    const result = await db.query(query, [...values, limit, offset]);
+
+    return {
+      data: result.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   static async findById(id, id_user) {
