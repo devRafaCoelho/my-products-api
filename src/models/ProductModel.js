@@ -48,18 +48,23 @@ class ProductModel {
     let values = [id_user];
     let paramCount = 1;
 
-    // Filtro por data de validade
+    // Filtro por data de validade (produtos que vencem até a data especificada)
     if (expiration_date) {
       paramCount++;
-      conditions.push(`p.expiration_date = $${paramCount}`);
+      conditions.push(`p.expiration_date <= $${paramCount}`);
       values.push(expiration_date);
     }
 
-    // Filtro por categoria
-    if (id_category) {
-      paramCount++;
-      conditions.push(`p.id_category = $${paramCount}`);
-      values.push(id_category);
+    // Filtro por categoria (aceita múltiplas categorias)
+    if (id_category && id_category.length > 0) {
+      const categoryPlaceholders = id_category
+        .map((_, index) => {
+          paramCount++;
+          return `$${paramCount}`;
+        })
+        .join(", ");
+      conditions.push(`p.id_category IN (${categoryPlaceholders})`);
+      values.push(...id_category);
     }
 
     // Filtro de busca por nome

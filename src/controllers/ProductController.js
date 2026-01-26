@@ -53,9 +53,17 @@ class ProductController {
         });
       }
 
+      // Processa id_category para aceitar múltiplos valores
+      let categoryIds = [];
+      if (id_category) {
+        categoryIds = Array.isArray(id_category)
+          ? id_category
+          : id_category.split(",").map((id) => id.trim());
+      }
+
       const filters = {
         expiration_date,
-        id_category,
+        id_category: categoryIds,
         search,
       };
 
