@@ -38,7 +38,7 @@ class ProductController {
         page = 1,
         limit = 10,
         expiration_date,
-        category,
+        id_category,
         search,
       } = req.query;
 
@@ -55,7 +55,7 @@ class ProductController {
 
       const filters = {
         expiration_date,
-        category,
+        id_category,
         search,
       };
 

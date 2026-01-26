@@ -8,7 +8,7 @@ class ProductModel {
     price,
     stock,
     expiration_date,
-    category,
+    id_category,
     id_user,
   }) {
     this.id = id;
@@ -17,13 +17,13 @@ class ProductModel {
     this.price = price;
     this.stock = stock;
     this.expiration_date = expiration_date;
-    this.category = category;
+    this.id_category = id_category;
     this.id_user = id_user;
   }
 
   async create() {
     const query = `
-      INSERT INTO products (name, description, price, stock, expiration_date, category, id_user)
+      INSERT INTO products (name, description, price, stock, expiration_date, id_category, id_user)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
     `;
@@ -33,7 +33,7 @@ class ProductModel {
       this.price,
       this.stock,
       this.expiration_date,
-      this.category,
+      this.id_category,
       this.id_user,
     ];
     const result = await db.query(query, values);
@@ -41,49 +41,68 @@ class ProductModel {
   }
 
   static async findAll(id_user, page = 1, limit = 10, filters = {}) {
-    const { expiration_date, category, search } = filters;
+    const { expiration_date, id_category, search } = filters;
 
     // Construir a query dinamicamente
-    let conditions = ["id_user = $1"];
+    let conditions = ["p.id_user = $1"];
     let values = [id_user];
     let paramCount = 1;
 
     // Filtro por data de validade
     if (expiration_date) {
       paramCount++;
-      conditions.push(`expiration_date = $${paramCount}`);
+      conditions.push(`p.expiration_date = $${paramCount}`);
       values.push(expiration_date);
     }
 
     // Filtro por categoria
-    if (category) {
+    if (id_category) {
       paramCount++;
-      conditions.push(`category ILIKE $${paramCount}`);
-      values.push(category);
+      conditions.push(`p.id_category = $${paramCount}`);
+      values.push(id_category);
     }
 
     // Filtro de busca por nome
     if (search) {
       paramCount++;
-      conditions.push(`name ILIKE $${paramCount}`);
+      conditions.push(`p.name ILIKE $${paramCount}`);
       values.push(`%${search}%`);
     }
 
     const whereClause = conditions.join(" AND ");
 
     // Query para contar o total de registros
-    const countQuery = `SELECT COUNT(*) FROM products WHERE ${whereClause};`;
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM products p
+      LEFT JOIN categories c ON p.id_category = c.id
+      WHERE ${whereClause};
+    `;
     const countResult = await db.query(countQuery, values);
     const total = parseInt(countResult.rows[0].count, 10);
 
     // Calcular offset
     const offset = (page - 1) * limit;
 
-    // Query para buscar os produtos com paginação
+    // Query para buscar os produtos com paginação e informações da categoria
     const query = `
-      SELECT * FROM products 
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.stock,
+        p.expiration_date,
+        p.id_category,
+        p.id_user,
+        p.created_at,
+        p.updated_at,
+        c.name as category_name,
+        c.description as category_description
+      FROM products p
+      LEFT JOIN categories c ON p.id_category = c.id
       WHERE ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY p.name ASC
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2};
     `;
 
@@ -101,7 +120,24 @@ class ProductModel {
   }
 
   static async findById(id, id_user) {
-    const query = `SELECT * FROM products WHERE id = $1 AND id_user = $2;`;
+    const query = `
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.stock,
+        p.expiration_date,
+        p.id_category,
+        p.id_user,
+        p.created_at,
+        p.updated_at,
+        c.name as category_name,
+        c.description as category_description
+      FROM products p
+      LEFT JOIN categories c ON p.id_category = c.id
+      WHERE p.id = $1 AND p.id_user = $2;
+    `;
     const result = await db.query(query, [id, id_user]);
     return result.rows[0];
   }
