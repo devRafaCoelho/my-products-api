@@ -754,7 +754,9 @@ class NfceController {
         });
       }
 
-      res.status(200).json(products);
+      res.status(200).json({
+        products: products,
+      });
     } catch (error) {
       console.error("Erro ao consultar NFCe:", error);
       res.status(500).json({
