@@ -6,6 +6,7 @@ const cors = require("cors");
 const setUserRoutes = require("./routes/userRoutes");
 const setProductRoutes = require("./routes/productRoutes");
 const setCategoryRoutes = require("./routes/categoryRoutes");
+const setNfceRoutes = require("./routes/nfceRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 setUserRoutes(app);
 setProductRoutes(app);
 setCategoryRoutes(app);
+setNfceRoutes(app);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
