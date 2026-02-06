@@ -29,9 +29,7 @@ const productObjectSchema = JoiExtended.object({
       "date.format": "A data de validade deve estar no formato YYYY-MM-DD.",
       "date.base": "A data de validade deve ser uma data válida.",
     }),
-  id_category: JoiExtended.string().uuid().required().messages({
-    "any.required": "A categoria é obrigatória.",
-    "string.empty": "A categoria é obrigatória.",
+  id_category: JoiExtended.string().uuid().optional().messages({
     "string.base": "A categoria deve ser um UUID válido.",
     "string.guid": "A categoria deve ser um UUID válido.",
   }),

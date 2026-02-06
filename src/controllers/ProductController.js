@@ -1,16 +1,28 @@
 const ProductModel = require("../models/ProductModel");
+const CategoryModel = require("../models/CategoryModel");
 
 class ProductController {
+  async getDefaultCategoryId() {
+    const defaultCategory = await CategoryModel.findByName("Outros");
+    if (!defaultCategory) {
+      throw new Error("Categoria padrão 'Outros' não encontrada. Por favor, crie esta categoria primeiro.");
+    }
+    return defaultCategory.id;
+  }
+
   async createProduct(req, res) {
     try {
       const data = req.body;
       const userId = req.user.id;
 
-      // Verifica se é um array de produtos
+      const defaultCategoryId = await this.getDefaultCategoryId();
+
       if (Array.isArray(data)) {
-        // Processa todos os produtos em paralelo para melhor performance
-        const productPromises = data.map((productData) => {
+        const productPromises = data.map(async (productData) => {
           productData.id_user = userId;
+          if (!productData.id_category) {
+            productData.id_category = defaultCategoryId;
+          }
           const product = new ProductModel(productData);
           return product.create();
         });
@@ -19,15 +31,17 @@ class ProductController {
         return res.status(201).json(createdProducts);
       }
 
-      // Caso seja um único produto
       data.id_user = userId;
+      if (!data.id_category) {
+        data.id_category = defaultCategoryId;
+      }
       const product = new ProductModel(data);
       const newProduct = await product.create();
 
       res.status(201).json(newProduct);
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Erro ao criar produto" });
+      res.status(500).json({ message: error.message || "Erro ao criar produto" });
     }
   }
 
@@ -109,7 +123,7 @@ class ProductController {
       return res.status(200).json(updatedProduct);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao atualizar produto" });
+      return res.status(500).json({ message: error.message || "Erro ao atualizar produto" });
     }
   }
 

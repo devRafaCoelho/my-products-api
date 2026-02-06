@@ -18,6 +18,12 @@ class CategoryModel {
     const result = await db.query(query, [id]);
     return result.rows[0];
   }
+
+  static async findByName(name) {
+    const query = `SELECT * FROM categories WHERE name = $1;`;
+    const result = await db.query(query, [name]);
+    return result.rows[0];
+  }
 }
 
 module.exports = CategoryModel;
