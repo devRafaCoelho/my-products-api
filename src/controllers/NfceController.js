@@ -488,6 +488,8 @@ class NfceController {
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
+          '--no-zygote',
+          '--single-process', // Reduz uso de memória em ambientes serverless (Render, etc.)
           // Permite navegação para URLs HTTP (ex: SEFAZ BA) - o modo HTTPS-First do Chrome bloqueia por padrão
           '--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsFirstMode',
         ],
