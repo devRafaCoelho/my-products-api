@@ -3,7 +3,7 @@ services:
     name: my-products-api
     env: node
     region: oregon
-    buildCommand: npm install && npx puppeteer browsers install chrome
+    buildCommand: npm install
     startCommand: node src/index.js
     healthCheckPath: /
     envVars:

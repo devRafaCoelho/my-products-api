@@ -1,8 +1,13 @@
 const axios = require("axios");
 const { JSDOM } = require("jsdom");
 const xml2js = require("xml2js");
-const puppeteer = require("puppeteer");
 const soap = require("soap");
+
+// Na Render (Linux) usa @sparticuz/chromium - binário otimizado para serverless
+// Localmente (Windows/Mac) usa Puppeteer com Chrome incluído
+const isServerlessEnv = process.platform === "linux";
+const puppeteer = isServerlessEnv ? require("puppeteer-core") : require("puppeteer");
+const chromium = isServerlessEnv ? require("@sparticuz/chromium") : null;
 
 class NfceController {
   parseNFCeUrl(qrCodeUrl) {
@@ -480,8 +485,8 @@ class NfceController {
   async consultNFCeWithPuppeteer(qrCodeUrl) {
     let browser = null;
     try {
-      browser = await puppeteer.launch({
-        headless: true,
+      const launchOptions = {
+        headless: isServerlessEnv ? "shell" : true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -489,11 +494,20 @@ class NfceController {
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
           '--no-zygote',
-          '--single-process', // Reduz uso de memória em ambientes serverless (Render, etc.)
           // Permite navegação para URLs HTTP (ex: SEFAZ BA) - o modo HTTPS-First do Chrome bloqueia por padrão
           '--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsFirstMode',
         ],
-      });
+      };
+
+      if (isServerlessEnv && chromium) {
+        chromium.setGraphicsMode = false; // Desabilita WebGL para economizar memória
+        launchOptions.executablePath = await chromium.executablePath();
+        launchOptions.args = [...(chromium.args || []), ...launchOptions.args];
+      } else {
+        launchOptions.args.push('--single-process');
+      }
+
+      browser = await puppeteer.launch(launchOptions);
 
       const page = await browser.newPage();
       await page.setViewport({ width: 1920, height: 1080 });
