@@ -488,6 +488,8 @@ class NfceController {
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--disable-gpu',
+          // Permite navegação para URLs HTTP (ex: SEFAZ BA) - o modo HTTPS-First do Chrome bloqueia por padrão
+          '--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsFirstMode',
         ],
       });
 
@@ -500,7 +502,7 @@ class NfceController {
         timeout: 30000,
       });
 
-      await page.waitForTimeout(3000);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const products = await page.evaluate(() => {
         const productList = [];
