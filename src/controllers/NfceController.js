@@ -8,6 +8,7 @@ const soap = require("soap");
 const isServerlessEnv = process.platform === "linux";
 const puppeteer = isServerlessEnv ? require("puppeteer-core") : require("puppeteer");
 const chromium = isServerlessEnv ? require("@sparticuz/chromium") : null;
+const { getCategoryNameForProduct, getCategoryNameFromNCM } = require("../utils/productCategoryMapping");
 
 class NfceController {
   parseNFCeUrl(qrCodeUrl) {
@@ -154,7 +155,7 @@ class NfceController {
           price: price,
           stock: quantity,
           expiration_date: null,
-          category: "Outros",
+          category: getCategoryNameForProduct(name || "Produto sem nome"),
         });
       }
     }
@@ -302,7 +303,7 @@ class NfceController {
               price: price,
               stock: quantity,
               expiration_date: null,
-              category: "Outros",
+              category: getCategoryNameForProduct(name.substring(0, 200) || "Produto sem nome"),
             });
           }
         }
@@ -459,6 +460,8 @@ class NfceController {
           const price = parseFloat(prod.vProd || prod.vUnCom || "0");
           const quantity = parseFloat(prod.qCom || prod.qTrib || "1");
           const code = prod.cProd || prod.cEAN || null;
+          const ncm = prod.NCM ?? prod.ncm ?? null;
+          const category = getCategoryNameFromNCM(ncm) || getCategoryNameForProduct(name);
 
           if (name && price > 0) {
             products.push({
@@ -467,7 +470,7 @@ class NfceController {
               price: price,
               stock: Math.round(quantity),
               expiration_date: null,
-              category: "Outros",
+              category,
             });
           }
         } catch (error) {
@@ -483,42 +486,43 @@ class NfceController {
   }
 
   async consultNFCeWithPuppeteer(qrCodeUrl) {
-    let browser = null;
-    try {
-      const launchOptions = {
-        headless: isServerlessEnv ? "shell" : true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--disable-gpu',
-          '--no-zygote',
-          // Permite navegação para URLs HTTP (ex: SEFAZ BA) - o modo HTTPS-First do Chrome bloqueia por padrão
-          '--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsFirstMode',
-        ],
-      };
+    const maxAttempts = 2;
 
-      if (isServerlessEnv && chromium) {
-        chromium.setGraphicsMode = false; // Desabilita WebGL para economizar memória
-        launchOptions.executablePath = await chromium.executablePath();
-        launchOptions.args = [...(chromium.args || []), ...launchOptions.args];
-      } else {
-        launchOptions.args.push('--single-process');
-      }
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      let browser = null;
+      try {
+        const launchOptions = {
+          headless: isServerlessEnv ? "shell" : true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--disable-gpu',
+            '--no-zygote',
+            // Permite navegação para URLs HTTP (ex: SEFAZ BA) - o modo HTTPS-First do Chrome bloqueia por padrão
+            '--disable-features=HttpsFirstBalancedModeAutoEnable,HttpsFirstMode',
+          ],
+        };
 
-      browser = await puppeteer.launch(launchOptions);
+        if (isServerlessEnv && chromium) {
+          chromium.setGraphicsMode = false; // Desabilita WebGL para economizar memória
+          launchOptions.executablePath = await chromium.executablePath();
+          launchOptions.args = [...(chromium.args || []), ...launchOptions.args];
+        }
 
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1920, height: 1080 });
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        browser = await puppeteer.launch(launchOptions);
 
-      await page.goto(qrCodeUrl, {
-        waitUntil: 'networkidle2',
-        timeout: 30000,
-      });
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1920, height: 1080 });
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+        await page.goto(qrCodeUrl, {
+          waitUntil: 'domcontentloaded',
+          timeout: 30000,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const products = await page.evaluate(() => {
         const productList = [];
@@ -600,6 +604,8 @@ class NfceController {
         return productList;
       });
 
+      products.forEach((p) => { p.category = getCategoryNameForProduct(p.name); });
+
       if (products.length > 0) {
         return products;
       }
@@ -648,19 +654,36 @@ class NfceController {
         return products;
       });
 
+      tableProducts.forEach((p) => { p.category = getCategoryNameForProduct(p.name); });
+
       if (tableProducts.length > 0) {
         return tableProducts;
       }
 
       return [];
-    } catch (error) {
-      console.error("Erro ao usar Puppeteer:", error);
-      return null;
-    } finally {
-      if (browser) {
-        await browser.close();
+      } catch (error) {
+        const msg = (error?.message || '') + (error?.cause?.message || '');
+        const isFrameDetached = /frame was detached|LifecycleWatcher disposed/i.test(msg);
+        if (browser) {
+          try {
+            await browser.close();
+          } catch (_) {}
+          browser = null;
+        }
+        if (attempt < maxAttempts && isFrameDetached) {
+          continue;
+        }
+        console.error("Erro ao usar Puppeteer:", error);
+        return null;
+      } finally {
+        if (browser) {
+          try {
+            await browser.close();
+          } catch (_) {}
+        }
       }
     }
+    return null;
   }
 
   async consultNFCe(qrCodeUrl) {
